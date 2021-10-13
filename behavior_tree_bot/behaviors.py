@@ -112,19 +112,25 @@ def production(state):
 
 # Find the nearest one
 def attack_nearest_target(state):
-    my_planets = [planet for planet in state.my_planets()] # getting one of my planets
-    distance = inf # Set a distance for compare
-    nearest_target = None
-    for target in state.neutral_planets():
-        target_distance = state.distance(my_planets.ID, target.ID)
-        if target_distance < distance:
-            # attack it.
-            shipWeNeed = target.num_ships + 1;
-            if my_planets.num_ships > shipWeNeed:
-                distance = target_distance
-                nearest_target = target
-    if not nearest_target:
-        return False
-    else:
-        return issue_order(state, my_planets.ID, nearest_target.ID, shipWeNeed)
+    # my_planet = state.my_planets()[0] # getting one of my planets
+    check = 0
+    for my_planet in state.my_planets():
+        # for every planet find the nearest neutral which can be taken [find one]
+        distance = inf # Set a distance for compare
+        nearest_target = None
+        for target in state.neutral_planets():
+            target_distance = state.distance(my_planet.ID, target.ID)
+            if target_distance < distance:
+                # attack it.
+                shipWeNeed = target.num_ships + 1;
+                if my_planet.num_ships > shipWeNeed:
+                    distance = target_distance
+                    nearest_target = target
+        if nearest_target:
+            check += 1
+            issue_order(state, my_planet.ID, nearest_target.ID, shipWeNeed)
 
+    if check is not 0:
+        return True
+    else:
+        return False
