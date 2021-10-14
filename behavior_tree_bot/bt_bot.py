@@ -29,9 +29,8 @@ def setup_behavior_tree():
     attack_nearest_at_first = Sequence(name='Attack Nearest at First')
     neutral_planet_check = Check(if_neutral_planet_available)
     start_action = Action(attack_nearest_neutral)
-    attack_nearest_at_first.child_nodes = [neutral_planet_check, start_action]
-
-    production_action = Action(production)
+    attack_weakest = Action(attack_weakest_enemy_planet)
+    attack_nearest_at_first.child_nodes = [neutral_planet_check, start_action, attack_weakest]
 
     combat_selector = Selector(name='Spread and Offense Strategy')
 
