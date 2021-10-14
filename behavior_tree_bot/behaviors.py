@@ -45,6 +45,58 @@ def spread_to_weakest_neutral_planet(state):
         # (4) Send half the ships from my strongest planet to the weakest enemy planet.
         return issue_order(state, strongest_planet.ID, weakest_planet.ID, strongest_planet.num_ships / 2)
 
+# attack from aggressive_bot.py
+def attack(state):
+    my_planets = iter(sorted(state.my_planets(), key=lambda p: p.num_ships))
+
+    enemy_planets = [planet for planet in state.enemy_planets()
+                      if not any(fleet.destination_planet == planet.ID for fleet in state.my_fleets())]
+    enemy_planets.sort(key=lambda p: p.num_ships)
+
+    target_planets = iter(enemy_planets)
+
+    try:
+        my_planet = next(my_planets)
+        target_planet = next(target_planets)
+        while True:
+            required_ships = target_planet.num_ships + \
+                                 state.distance(my_planet.ID, target_planet.ID) * target_planet.growth_rate + 1
+
+            if my_planet.num_ships > required_ships:
+                issue_order(state, my_planet.ID, target_planet.ID, required_ships)
+                my_planet = next(my_planets)
+                target_planet = next(target_planets)
+            else:
+                my_planet = next(my_planets)
+
+    except StopIteration:
+        return
+
+# spread from aggressive_bot.py
+def spread(state):
+    my_planets = iter(sorted(state.my_planets(), key=lambda p: p.num_ships))
+
+    neutral_planets = [planet for planet in state.neutral_planets()
+                      if not any(fleet.destination_planet == planet.ID for fleet in state.my_fleets())]
+    neutral_planets.sort(key=lambda p: p.num_ships)
+
+    target_planets = iter(neutral_planets)
+
+    try:
+        my_planet = next(my_planets)
+        target_planet = next(target_planets)
+        while True:
+            required_ships = target_planet.num_ships + 1
+
+            if my_planet.num_ships > required_ships:
+                issue_order(state, my_planet.ID, target_planet.ID, required_ships)
+                my_planet = next(my_planets)
+                target_planet = next(target_planets)
+            else:
+                my_planet = next(my_planets)
+
+    except StopIteration:
+        return
 
 # defend our planets from incoming attacks
 def defend_incoming_attacks(state):
@@ -53,7 +105,7 @@ def defend_incoming_attacks(state):
         return p.num_ships \
                + sum(fleet.num_ships for fleet in state.my_fleets() if fleet.destination_planet == p.ID) \
                - sum(fleet.num_ships for fleet in state.enemy_fleets() if fleet.destination_planet == p.ID)
-    
+
     def distance(p):
         return state.distance(p.ID, protect_planet.ID)
 
@@ -70,8 +122,8 @@ def defend_incoming_attacks(state):
 
     protect_planet = sorted(protect_planets, key=strength)[0]
 
-    logging.debug('Protect Planet') 
-    logging.debug(protect_planet) 
+    logging.debug('Protect Planet')
+    logging.debug(protect_planet)
 
     # sort our planets with distance to current planet
     # distance / strength
@@ -93,7 +145,7 @@ def defend_incoming_attacks(state):
         ships_sending = strength(unit) - 1
         issue_order(state, unit.ID, protect_planet.ID, ships_sending)
         ships_required -= ships_sending
-    
+
     return True
 
 
@@ -176,7 +228,7 @@ def attack_nearest_neutral(state):
         return -p.num_ships \
                + sum(fleet.num_ships for fleet in state.my_fleets() if fleet.destination_planet == p.ID) \
                - sum(fleet.num_ships for fleet in state.enemy_fleets() if fleet.destination_planet == p.ID)
-    
+
     neutral_planets = [p for p in state.neutral_planets() if neutral_strength(p) <= 0]
     if not neutral_planets:
         return False
@@ -201,7 +253,7 @@ def attack_nearest_neutral(state):
                 if my_planet.num_ships > shipWeNeed:
                     distance = target_distance
                     nearest_target = target
-        
+
         if nearest_target:
             check += 1
             issue_order(state, my_planet.ID, nearest_target.ID, shipWeNeed)
