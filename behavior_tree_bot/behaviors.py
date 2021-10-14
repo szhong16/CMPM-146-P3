@@ -1,5 +1,9 @@
 import sys
 sys.path.insert(0, '../')
+
+import logging, traceback, sys, os, inspect
+logging.basicConfig(filename=__file__[:-3] +'.log', filemode='w', level=logging.DEBUG)
+
 from planet_wars import issue_order
 from math import inf
 
@@ -41,8 +45,61 @@ def spread_to_weakest_neutral_planet(state):
         # (4) Send half the ships from my strongest planet to the weakest enemy planet.
         return issue_order(state, strongest_planet.ID, weakest_planet.ID, strongest_planet.num_ships / 2)
 
+
+# defend our planets from incoming attacks
+def defend_incoming_attacks(state):
+    # helper functions
+    def strength(p):
+        return p.num_ships \
+               + sum(fleet.num_ships for fleet in state.my_fleets() if fleet.destination_planet == p.ID) \
+               - sum(fleet.num_ships for fleet in state.enemy_fleets() if fleet.destination_planet == p.ID)
+    
+    def distance(p):
+        return state.distance(p.ID, protect_planet.ID)
+
+    enemy_targets = [fleet.destination_planet for fleet in state.enemy_fleets()]
+
+    # find the planets that are been attacked
+    # [WIP] find the priority planet to protect
+    protect_planets = []
+    for planet in state.my_planets():
+        if planet.ID in enemy_targets:
+            # check if can survive attack
+            if strength(planet) <= 0:
+                protect_planets.append(planet)
+
+    protect_planet = sorted(protect_planets, key=strength)[0]
+
+    logging.debug('Protect Planet') 
+    logging.debug(protect_planet) 
+
+    # sort our planets with distance to current planet
+    # distance / strength
+    # we can improve this by also accounting for growth rate!
+    combat_units = state.my_planets()
+    combat_units.remove(protect_planet)
+    combat_units = iter(sorted(combat_units, key=lambda x: (strength(x) / distance(x))))
+
+    # calculate how many ship needed for reinforcement
+    ships_required = sum(fleet.num_ships for fleet in state.enemy_fleets() if fleet.destination_planet == protect_planet.ID)
+
+    # check which combat unit can send that many ships and send them.
+    for unit in combat_units:
+        # check if finish defense
+        if ships_required <= 0:
+            break
+
+        # so if there're need to defense, keep 1 ship at this planet to defense
+        ships_sending = strength(unit) - 1
+        issue_order(state, unit.ID, protect_planet.ID, ships_sending)
+        ships_required -= ships_sending
+    
+    return True
+
+
+
 # From defensive_bot.py
-def defend(state):
+def defensive_defend(state):
     my_planets = [planet for planet in state.my_planets()]
     if not my_planets:
         return
@@ -111,14 +168,32 @@ def production(state):
         return
 
 # Find the nearest one
-def attack_nearest_target(state):
-    # my_planet = state.my_planets()[0] # getting one of my planets
+def attack_nearest_neutral(state):
+    enemy_targets = [fleet.destination_planet for fleet in state.enemy_fleets()]
+
+    # calculate the strength of neutral planet
+    def neutral_strength(p):
+        return -p.num_ships \
+               + sum(fleet.num_ships for fleet in state.my_fleets() if fleet.destination_planet == p.ID) \
+               - sum(fleet.num_ships for fleet in state.enemy_fleets() if fleet.destination_planet == p.ID)
+    
+    neutral_planets = [p for p in state.neutral_planets() if neutral_strength(p) <= 0]
+    if not neutral_planets:
+        return False
+
+    neutral_planets = sorted(neutral_planets, key=neutral_strength)
+
     check = 0
     for my_planet in state.my_planets():
+
+        # make sure current planet is not under attack
+        if my_planet.ID in enemy_targets:
+            continue
+
         # for every planet find the nearest neutral which can be taken [find one]
         distance = inf # Set a distance for compare
         nearest_target = None
-        for target in state.neutral_planets():
+        for target in neutral_planets:
             target_distance = state.distance(my_planet.ID, target.ID)
             if target_distance < distance:
                 # attack it.
@@ -126,6 +201,7 @@ def attack_nearest_target(state):
                 if my_planet.num_ships > shipWeNeed:
                     distance = target_distance
                     nearest_target = target
+        
         if nearest_target:
             check += 1
             issue_order(state, my_planet.ID, nearest_target.ID, shipWeNeed)
@@ -134,3 +210,5 @@ def attack_nearest_target(state):
         return True
     else:
         return False
+
+# calculate future
