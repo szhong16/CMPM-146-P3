@@ -26,30 +26,33 @@ def setup_behavior_tree():
     # Top-down construction of behavior tree
     root = Selector(name='High Level Ordering of Strategies')
 
-    attack_nearest_at_first = Sequence(name='Attack Nearest at First')
-    neutral_planet_check = Check(if_neutral_planet_available)
-    start_action = Action(attack_nearest_neutral)
-    attack_weakest = Action(attack_weakest_enemy_planet)
-    attack_nearest_at_first.child_nodes = [neutral_planet_check, start_action, attack_weakest]
+    # Defend Plan
+    defensive_plan = Sequence(name='Defensive Strategy')
+    defend_check = Check(if_been_attacked_without_reinforcement)
+    defend_action = Action(defend_incoming_attacks)
+    defensive_plan.child_nodes = [defend_check, defend_action]
 
+    # Combat Plan
     combat_selector = Selector(name='Spread and Offense Strategy')
-
     attack_sequence = Sequence(name='Attacking')
-    largest_fleet_check = Check(have_largest_fleet)
+    attack_check = Check(if_possible_victory)
     attack_action = Action(attack)
-    attack_sequence.child_nodes = [largest_fleet_check, attack_action]
-    attack_sequence.child_nodes = [attack_action]
+    attack_sequence.child_nodes = [attack_check, attack_action]
 
-    spread_action = Action(spread)
+    weakening_sequence = Sequence(name="Weakening")
+    weakening_check = Check(if_enemy_planet_available)
+    weakening_action = Action(attack_weakest_enemy_planet)
+    weakening_sequence.child_nodes = [weakening_check, weakening_action]
 
-    combat_selector.child_nodes = [attack_sequence, spread_action]
+    combat_selector.child_nodes = [attack_sequence, weakening_sequence]
 
-    # defensive_plan = Sequence(name='Defensive Strategy')
-    # defend_check = Check(if_been_attacked_without_reinforcement)
-    defend_action = Action(defensive_defend)
-    # defensive_plan.child_nodes = [defend_check, defend_action]
-
-    root.child_nodes = [attack_nearest_at_first, combat_selector, defend_action]
+    # Spread Plan
+    spread_plan = Sequence(name='Spread Strategy')
+    neutral_planet_check = Check(if_neutral_planet_available)
+    spread_action = Action(attack_cheapest_neutral)
+    spread_plan.child_nodes = [neutral_planet_check, spread_action]
+    
+    root.child_nodes = [defensive_plan, combat_selector, spread_plan]
 
     logging.info('\n' + root.tree_to_string())
     return root
