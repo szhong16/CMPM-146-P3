@@ -1,5 +1,6 @@
 import subprocess
 import os, sys
+import random
 
 
 def show_match(bot, opponent_bot, map_num):
@@ -60,7 +61,13 @@ if __name__ == '__main__':
                  'opponent_bots/defensive_bot.py',
                  'opponent_bots/production_bot.py']
 
-    maps = [71, 13, 24, 56, 7]
+    a = random.randint(1,100)
+    b = random.randint(1,100)
+    c = random.randint(1,100)
+    d = random.randint(1,100)
+    e = random.randint(1,100)
+    maps = [a, b, c, d, e]
+    # maps = [71, 13, 24, 56, 7]
 
     my_bot = 'behavior_tree_bot/bt_bot.py'
     show = len(sys.argv) < 2 or sys.argv[1] == "show"
