@@ -81,8 +81,9 @@ if __name__ == '__main__':
     show = len(sys.argv) < 2 or sys.argv[1] == "show"
     
     # Run all maps
-    for i in range(10):
-        maps = [i, i, i, i, i]
+    for i in range(20):
+        a = random.randint(1,100)
+        maps = [a, a, a, a, a]
 
         for opponent, map in zip(opponents, maps):
             result = test(my_bot, opponent, map)
@@ -93,5 +94,6 @@ if __name__ == '__main__':
                 win_rate[result] = 1
 
     print("- BATTLE RESULT -")
-    print(win_rate)
+    for i in win_rate.keys():
+        print("{} - {}%".format(i, win_rate[i]))
 
