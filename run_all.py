@@ -83,7 +83,11 @@ if __name__ == '__main__':
     # Run all maps
     for i in range(20):
         a = random.randint(1,100)
-        maps = [a, a, a, a, a]
+        b = random.randint(1,100)
+        c = random.randint(1,100)
+        d = random.randint(1,100)
+        e = random.randint(1,100)
+        maps = [a, b, c, d, e]
 
         for opponent, map in zip(opponents, maps):
             result = test(my_bot, opponent, map)
