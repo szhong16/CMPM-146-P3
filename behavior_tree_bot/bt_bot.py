@@ -36,12 +36,12 @@ def setup_behavior_tree():
     combat_selector = Selector(name='Spread and Offense Strategy')
     attack_sequence = Sequence(name='Attacking')
     attack_check = Check(if_possible_victory)
-    attack_action = Action(attack)
+    attack_action = Action(attack_upgrade)
     attack_sequence.child_nodes = [attack_check, attack_action]
 
     weakening_sequence = Sequence(name="Weakening")
     weakening_check = Check(if_enemy_planet_available)
-    weakening_action = Action(attack_weakest_enemy_planet)
+    weakening_action = Action(attack_weakest_enemy_planet_upgrade)
     weakening_sequence.child_nodes = [weakening_check, weakening_action]
 
     combat_selector.child_nodes = [attack_sequence, weakening_sequence]
