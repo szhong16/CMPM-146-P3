@@ -1,11 +1,15 @@
 INFO:root:
 Selector: High Level Ordering of Strategies
-| Sequence: Attack Nearest at First
-| | Check: if_neutral_planet_available
-| | Action: attack_nearest_neutral
-| | Action: attack_weakest_enemy_planet
+| Sequence: Defensive Strategy
+| | Check: if_been_attacked_without_reinforcement
+| | Action: defend_incoming_attacks
 | Selector: Spread and Offense Strategy
 | | Sequence: Attacking
-| | | Action: attack
-| | Action: spread
-| Action: defensive_defend
+| | | Check: if_possible_victory
+| | | Action: attack_upgrade
+| | Sequence: Weakening
+| | | Check: if_enemy_planet_available
+| | | Action: attack_weakest_enemy_planet_upgrade
+| Sequence: Spread Strategy
+| | Check: if_neutral_planet_available
+| | Action: attack_cheapest_neutral
